@@ -255,60 +255,80 @@ void Inkplate::setRotation(uint8_t r) {
 }
 
 //Turn off epapewr supply and put all digital IO pins in high Z state
-void Inkplate::einkOff() {
-  if(_panelOn == 0) return;
-  _panelOn = 0;
-  GMOD_CLEAR;
-  OE_CLEAR;
-  GPIO.out &= ~(DATA | CL | LE);
-  SPH_CLEAR;
-  SPV_CLEAR;
+// Turn off epaper power supply and put all digital IO pins in high Z state
+void Inkplate::einkOff()
+{
+    if (getPanelState() == 0)
+        return;
+    OE_CLEAR;
+    GMOD_CLEAR;
+    GPIO.out &= ~(DATA | LE | CL);
+    CKV_CLEAR;
+    SPH_CLEAR;
+    SPV_CLEAR;
 
-  PWRUP_CLEAR;
-  WAKEUP_CLEAR;
-  VCOM_CLEAR;
+    VCOM_CLEAR;
+    delay(6);
+    PWRUP_CLEAR;
+    WAKEUP_CLEAR;
+    
+    unsigned long timer = millis();
+    do {
+        delay(1);
+    } while ((readPowerGood() != 0) && (millis() - timer) < 250);
 
-  pinsZstate();
+    pinsZstate();
+    setPanelState(0);
 }
 
-//Turn on supply for epaper display (TPS65186) [+15 VDC, -15VDC, +22VDC, -20VDC, +3.3VDC, VCOM]
-void Inkplate::einkOn() {
-  if(_panelOn == 1) return;
-  _panelOn = 1;
-  pinsAsOutputs();
-  WAKEUP_SET;
-  PWRUP_SET;
-  VCOM_SET;
-  //Enable all rails
-  Wire.beginTransmission(0x48);
-  Wire.write(0x01);
-  Wire.write(B00111111);
-  Wire.endTransmission();
-  
-  delay(40);
-  
-  Wire.beginTransmission(0x48);
-  Wire.write(0x0D);
-  Wire.write(B10000000);
-  Wire.endTransmission();
-  
-  delay(2);
-  
-  Wire.beginTransmission(0x48);
-  Wire.write(0x00);
-  Wire.endTransmission();
-  
-  Wire.requestFrom(0x48, 1);
-  _temperature = Wire.read();
+// Turn on supply for epaper display (TPS65186) [+15 VDC, -15VDC, +22VDC, -20VDC, +3.3VDC, VCOM]
+void Inkplate::einkOn()
+{
+    if (getPanelState() == 1)
+        return;
+    WAKEUP_SET;
+    delay(1);
+    PWRUP_SET;
 
-  LE_CLEAR; //setpin_le(FALSE);
-  OE_CLEAR; //setpin_oe(FALSE);
-  CL_CLEAR;   //setpin_cl(FALSE);
-  SPH_SET;   //setpin_sph(FALSE);
-  GMOD_SET;   //setpin_gmode(FALSE);
-  SPV_SET;   //setpin_spv(FALSE);
-  CKV_CLEAR;   //setpin_ckv(FALSE);
-  OE_SET;
+    // Enable all rails
+    Wire.beginTransmission(0x48);
+    Wire.write(0x01);
+    Wire.write(B00111111);
+    Wire.endTransmission();
+    pinsAsOutputs();
+    LE_CLEAR;
+    OE_CLEAR;
+    CL_CLEAR;
+    SPH_SET;
+    GMOD_SET;
+    SPV_SET;
+    CKV_CLEAR;
+    OE_CLEAR;
+    VCOM_SET;
+
+    unsigned long timer = millis();
+    do {
+        delay(1);
+    } while ((readPowerGood() != PWR_GOOD_OK) && (millis() - timer) < 250);
+	if ((millis() - timer) >= 250)
+    {
+        WAKEUP_CLEAR;
+		VCOM_CLEAR;
+		PWRUP_CLEAR;
+		return;
+    }
+
+    OE_SET;
+    setPanelState(1);
+}
+
+uint8_t Inkplate::readPowerGood() {
+    Wire.beginTransmission(0x48);
+    Wire.write(0x0F);
+    Wire.endTransmission();
+	
+    Wire.requestFrom(0x48, 1);
+    return Wire.read();
 }
 
 void Inkplate::selectDisplayMode(uint8_t _mode) {
@@ -371,7 +391,11 @@ SPIClass Inkplate::getSPI() {
 }
 
 uint8_t Inkplate::getPanelState() {
-  return _panelOn;
+    return _panelOn;
+}
+
+void Inkplate::setPanelState(uint8_t state) {
+    _panelOn = state;
 }
 
 uint8_t Inkplate::readTouchpad(uint8_t _pad) {
@@ -379,7 +403,32 @@ uint8_t Inkplate::readTouchpad(uint8_t _pad) {
 }
 
 int8_t Inkplate::readTemperature() {
-  return _temperature;
+    int8_t temp;
+    if(getPanelState() == 0)
+    {
+        WAKEUP_SET;
+        PWRUP_SET;
+        delay(5);
+    }
+    Wire.beginTransmission(0x48);
+    Wire.write(0x0D);
+    Wire.write(B10000000);
+    Wire.endTransmission();
+    delay(5);
+
+    Wire.beginTransmission(0x48);
+    Wire.write(0x00);
+    Wire.endTransmission();
+
+    Wire.requestFrom(0x48, 1);
+    temp = Wire.read();
+    if(getPanelState() == 0)
+    {
+        PWRUP_CLEAR;
+        WAKEUP_CLEAR;
+        delay(5);
+    }
+    return temp;
 }
 
 double Inkplate::readBattery() {
@@ -398,21 +447,21 @@ void Inkplate::vscan_start()
   SPV_CLEAR;
   delayMicroseconds(10);
   CKV_CLEAR;
-  delayMicroseconds(1); //usleep1();
+  delayMicroseconds(0); //usleep1();
   CKV_SET;
   delayMicroseconds(8);
   SPV_SET;
   delayMicroseconds(10);
   CKV_CLEAR;
-  delayMicroseconds(1); //usleep1();
+  delayMicroseconds(0); //usleep1();
   CKV_SET;
   delayMicroseconds(18);
   CKV_CLEAR;
-  delayMicroseconds(1); //usleep1();
+  delayMicroseconds(0); //usleep1();
   CKV_SET;
   delayMicroseconds(18);
   CKV_CLEAR;
-  delayMicroseconds(1); //usleep1();
+  delayMicroseconds(0); //usleep1();
   CKV_SET;
   //delayMicroseconds(18);
 }
@@ -422,7 +471,7 @@ void Inkplate::vscan_write()
   CKV_CLEAR;
   LE_SET;
   LE_CLEAR;
-  delayMicroseconds(1);
+  delayMicroseconds(0);
   SPH_CLEAR;
   CL_SET;
   CL_CLEAR;
@@ -443,7 +492,7 @@ void Inkplate::vscan_end() {
   CKV_CLEAR;
   LE_SET;
   LE_CLEAR;
-  delayMicroseconds(1);
+  delayMicroseconds(0);
   //CKV_SET;
 }
 
@@ -603,11 +652,11 @@ void Inkplate::display1b() {
   einkOn();
   //clean();
   cleanFast(0, 1);
-  cleanFast(1, 12);
+  cleanFast(1, 16);
   cleanFast(2, 1);
   cleanFast(0, 11);
   cleanFast(2, 1);
-  cleanFast(1, 12);
+  cleanFast(1, 16);
   cleanFast(2, 1);
   cleanFast(0, 11);
   for (int k = 0; k < 5; k++) {
@@ -705,15 +754,14 @@ void Inkplate::display1b() {
 //Display content from RAM to display (3 bit per pixel,. 8 level of grayscale, STILL IN PROGRESSS, we need correct wavefrom to get good picture, use it only for pictures not for GFX).
 void Inkplate::display3b() {
   einkOn();
-  //cleanFast(0, 1);
-  cleanFast(1, 12);
- // cleanFast(2, 1);
-  cleanFast(0, 11);
-  //cleanFast(2, 1);
-  cleanFast(1, 12);
-  //cleanFast(2, 1);
+  cleanFast(0, 1);
+  cleanFast(1, 16);
+  cleanFast(2, 1);
   cleanFast(0, 11);
   cleanFast(2, 1);
+  cleanFast(1, 16);
+  cleanFast(2, 1);
+  cleanFast(0, 11);
   
   for (int k = 0; k < 8; k++) {
       uint8_t *dp = D_memory4Bit + (E_INK_HEIGHT * E_INK_WIDTH/2) - 1;
@@ -769,7 +817,7 @@ void Inkplate::display3b() {
   }
   //delay(50);
   //cleanFast(2, 1);
-  //cleanFast(3, 1);
+  cleanFast(3, 1);
   vscan_start();
   einkOff();
 }

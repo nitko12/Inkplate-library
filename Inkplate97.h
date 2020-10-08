@@ -25,6 +25,7 @@ NOTE: This library is still heavily in progress, so there is still some bugs. Us
 #include "Adafruit_GFX.h"
 #include "Wire.h"
 #include "SPI.h"
+//#include "Adafruit_MCP23017.h"
 #include "SdFat.h"
 
 #define MCP23017_INT_ADDR		0x20
@@ -73,6 +74,7 @@ NOTE: This library is still heavily in progress, so there is still some bugs. Us
 #define PAD1 				0
 #define PAD2 				1
 #define PAD3 				2
+#define PWR_GOOD_OK   0b11111010
 
 #define DATA    		0x0E8C0030   //D0-D7 = GPIO4 GPIO5 GPIO18 GPIO19 GPIO23 GPIO25 GPIO26 GPIO27
 
@@ -121,7 +123,6 @@ NOTE: This library is still heavily in progress, so there is still some bugs. Us
 #define _swap_int16_t(a, b) { int16_t t = a; a = b; b = t; }
 #endif
 
-//extern Adafruit_MCP23017 mcp;
 extern SPIClass spi2;
 extern SdFat sd;
 
@@ -170,6 +171,7 @@ class Inkplate : public Adafruit_GFX {
 	void setRotation(uint8_t);
     void einkOff(void);
     void einkOn(void);
+    uint8_t readPowerGood();
     void selectDisplayMode(uint8_t _mode);
 	uint8_t getDisplayMode();
 	int drawBitmapFromSD(SdFile* p, int x, int y);
@@ -178,6 +180,7 @@ class Inkplate : public Adafruit_GFX {
 	SdFat getSdFat();
 	SPIClass getSPI();
 	uint8_t getPanelState();
+    void setPanelState(uint8_t);
     uint8_t readTouchpad(uint8_t);
     int8_t readTemperature();
     double readBattery();
