@@ -14,7 +14,6 @@ NOTE: This library is still heavily in progress, so there is still some bugs. Us
 
 #include "Adafruit_GFX.h"
 #include "Inkplate97.h"
-//Adafruit_MCP23017 mcp;
 SPIClass spi2(HSPI);
 SdFat sd(&spi2);
 

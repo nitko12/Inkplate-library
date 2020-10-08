@@ -22,7 +22,7 @@
 RTC_DATA_ATTR int slide = 0;
 
 Inkplate display(INKPLATE_1BIT);	//Set library to be in 1 Bit display mode by default
-extern Adafruit_MCP23017 mcp;
+
 /*To convert image to bitmap (Array like this one) use LCD image converter program set to 4 bit grayscale. You can use 4 bit bitmap and display library will scale it to 3 bit bitmap and display it.
   Converting image to bitmap:
   Open lcd-image-converter.exe, when it opens click on New Image, than click OK. Go to Image -> Import... and browse image.

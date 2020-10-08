@@ -25,7 +25,6 @@ NOTE: This library is still heavily in progress, so there is still some bugs. Us
 #include "Adafruit_GFX.h"
 #include "Wire.h"
 #include "SPI.h"
-//#include "Adafruit_MCP23017.h"
 #include "SdFat.h"
 
 #define MCP23017_INT_ADDR		0x20
