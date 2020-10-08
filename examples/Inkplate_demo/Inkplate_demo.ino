@@ -5,7 +5,7 @@
 //Otherwise this example won't compile or won't work properly!
 //--------------------------------------------------------------------------------------
 
-#include <Inkplate.h>
+#include <Inkplate97.h>
 #include "image1.h"
 #include "image2.h"
 #include "picture1.h"

@@ -4,7 +4,7 @@
 // - Two 24 bit bitmap images (if you don't have any, open any image using MS Paint and save it as 24 bit bitmap) that has to be in root directory of your SD Card named image1.bmp and image2.bmp
 // - Some .txt file with not more than 200 characters, also in root directory of your SD card, named text.txt
 
-#include <Inkplate.h>               //Include Inkplate Library
+#include "Inkplate97.h"              //Include Inkplate Library
 #include "SdFat.h"                  //Include modified SdFat library
 Inkplate display(INKPLATE_1BIT);    //Constructor on Inkplate object
 SdFile file;                        //Constructor on SdFile object used for accessing files on SD card

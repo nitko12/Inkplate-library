@@ -1,4 +1,4 @@
-#include <Inkplate.h>
+#include "Inkplate97.h"
 Inkplate display(INKPLATE_1BIT);
 
 #define BUFFER_SIZE 1000
