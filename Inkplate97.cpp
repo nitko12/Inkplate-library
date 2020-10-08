@@ -26,6 +26,17 @@ Inkplate::Inkplate(uint8_t _mode) : Adafruit_GFX(E_INK_WIDTH, E_INK_HEIGHT) {
 void Inkplate::begin(void) {
   if(_beginDone == 1) return;
   Wire.begin();
+  WAKEUP_SET;
+  delay(1);
+  Wire.beginTransmission(0x48);
+  Wire.write(0x09);
+  Wire.write(B00011011); // Power up seq.
+  Wire.write(B00000000); // Power up delay (3mS per rail)
+  Wire.write(B00011011); // Power down seq.
+  Wire.write(B00000000); // Power down delay (6mS per rail)
+  Wire.endTransmission();
+  delay(1);
+  WAKEUP_CLEAR;
   memset(mcpRegsInt, 0, 22);
   memset(mcpRegsEx, 0, 22);
   
