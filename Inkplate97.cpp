@@ -43,6 +43,22 @@ void Inkplate::begin(void) {
   mcpBegin(MCP23017_INT_ADDR, mcpRegsInt);
   mcpBegin(MCP23017_EXT_ADDR, mcpRegsEx);
   
+  //Set all pins of seconds I/O expander to outputs, low.
+  //For some reason, it draw more current in deep sleep when pins are set as inputs...
+  for(int i = 0; i<15; i++)
+  {
+      pinModeInternal(MCP23017_EXT_ADDR, mcpRegsInt, i, OUTPUT);
+      digitalWriteInternal(MCP23017_EXT_ADDR, mcpRegsInt, i, LOW);
+  }
+  
+  //For same reason, unused pins of first I/O expander have to be also set as outputs, low.
+  pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, 13, OUTPUT);
+  pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, 14, OUTPUT);
+  pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, 15, OUTPUT);
+  digitalWriteInternal(MCP23017_INT_ADDR, mcpRegsInt, 13, LOW);
+  digitalWriteInternal(MCP23017_INT_ADDR, mcpRegsInt, 14, LOW);
+  digitalWriteInternal(MCP23017_INT_ADDR, mcpRegsInt, 15, LOW);
+  
   pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, VCOM, OUTPUT);
   pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, PWRUP, OUTPUT);
   pinModeInternal(MCP23017_INT_ADDR, mcpRegsInt, WAKEUP, OUTPUT);
